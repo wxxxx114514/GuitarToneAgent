@@ -1,0 +1,56 @@
+# ── Python 运行时产物（跑脚本会自动生成） ──
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# ── 环境：不进 git，用 uv 一步重建 ──
+#   uv sync            （按 pyproject.toml + uv.lock 建 venv）
+venv/
+.venv/
+python/
+ffmpeg/
+_env/
+uv_cache/
+uv_python/
+.pkgs.txt
+
+# ── 模型权重：不进 git（ckpt 699 MB，GitHub 单文件上限 100 MB） ──
+#   用 python tools/dl_models.py 下载，models/MANIFEST.json 里有 sha256
+#   models/*.yaml 和 MANIFEST.json 要保留（配置很小，是复现所必需）
+models/*.ckpt
+models/*.pth
+models/*.onnx
+models/*.part
+
+# ── 每首歌的音频产物（体积大、可重算） ──
+songs/*/stems/
+songs/*/stems_htdemucs/
+songs/*/di/*.wav
+songs/*/reamp/*.wav
+songs/*/reamp/*.part
+*.wav
+*.flac
+*.mp3
+
+# ── 生成物 / 临时 ──
+*.mo.part
+.models_cache/
+.cache/
+*.tmp
+~$*
+
+# 本地敏感/个性化配置（可能含 token、机器专属路径）
+.env
+.env.*
+*.local.json
+
+
+# ── 保留说明：以下【故意不忽略】──
+#   models/MANIFEST.json  模型来源与 sha256（复现所需）
+#   models/*.yaml         模型配置（4.9 KB）
+#   songs/*/target.npy    目标曲线（几百字节，是判据基准）
+#   songs/*/spec.json     演奏规格（结论）
+#   songs/*/notes.md      每首歌的进展记录（知识）
+#   presets/*.mo          调出来的预设成品（7 KB/个）
+#   docs/*.md             方法论与示例会话记录

@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "note": "模型不进 git（ckpt 699 MB > GitHub 100 MB 单文件上限）。用 tools/dl_models.py 按需下载，下载后按 sha256 校验。",
+  "source": {
+    "repo": "Blakus/bs_roformer_sw_6stem",
+    "url": "https://huggingface.co/Blakus/bs_roformer_sw_6stem",
+    "revision": "dd755f5f5eaa1b01deb970fb296a55f6fec458a6",
+    "lastModified": "2026-07-22T02:09:22.000Z",
+    "note": "直连可用；GitHub 上的同名仓库是 404，实际只在 HuggingFace"
+  },
+  "files": [
+    {
+      "name": "BS-Rofo-SW-Fixed.ckpt",
+      "bytes": 699412152,
+      "sha256": "24e7d35ee9c64415673d3fd33e06a67cac2c103c5df6267ba1576459c775916e",
+      "role": "BS-Roformer SW 6-stem 权重（vocals/bass/drums/guitar/piano/other）"
+    },
+    {
+      "name": "BS-Rofo-SW-Fixed.yaml",
+      "bytes": 4852,
+      "sha256": null,
+      "role": "模型配置（config），load_bsr.py 靠它做运行时注册",
+      "sha256_note": "非 LFS 小文件，HF 未提供 oid；字节数校验足够"
+    }
+  ],
+  "extra_models": [
+    {
+      "name": "dereverb_bs_roformer_anvuew_sdr_22.5050.ckpt",
+      "note": "另一路实验模型（去混响），不参与主管线；下载见 tools/dl_hf.py"
+    }
+  ]
+}

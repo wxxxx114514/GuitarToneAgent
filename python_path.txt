@@ -1,0 +1,8 @@
+# tone.ps1 找 Python 的顺序：
+#   1. 包内 venv\Scripts\python.exe   <- 已自带，正常不用改
+#   2. 环境变量 TONE_PY
+#   3. 本文件里列出的路径（每行一个，用 # 注释）
+#   4. py / python / python3（PATH 里找，自动跳过 Windows Store 的假 python）
+#
+# 包内已经带了完整环境，下面这行是【备用】——想用外部环境时取消注释。
+# <外部环境>\Scripts\python.exe

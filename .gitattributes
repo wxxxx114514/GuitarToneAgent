@@ -1,0 +1,21 @@
+# 统一换行符：文本入库一律 LF（避免每次 commit 显示整文件改动）
+* text=auto eol=lf
+
+# Windows 脚本保持 CRLF（PowerShell 5.1 更稳）
+*.ps1  text eol=crlf
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+
+# 二进制（不进库，但标记以防误处理）
+*.ckpt binary
+*.wav  binary
+*.flac binary
+*.npy  binary
+*.mo   binary
+*.exe  binary
+*.png  binary
+
+# GitHub 语言统计：不算作文档仓库
+*.md   linguist-documentation
+docs/* linguist-documentation
+reference/* linguist-documentation

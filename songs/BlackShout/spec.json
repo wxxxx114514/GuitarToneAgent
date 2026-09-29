@@ -1,0 +1,112 @@
+{
+  "song": "Black Shout (10th anniv. ver.)",
+  "key": "E",
+  "secondary": "B",
+  "chords": [
+    "F#m",
+    "G5",
+    "Bm",
+    "B",
+    "D#",
+    "Cm",
+    "E",
+    "Em",
+    "Dm",
+    "E",
+    "Em",
+    "Fm",
+    "G",
+    "E",
+    "Am",
+    "C",
+    "G",
+    "E",
+    "A5",
+    "Em"
+  ],
+  "technique": {
+    "palm_pct": 60.7,
+    "mid_pct": 27.6,
+    "open_pct": 11.7,
+    "lowmid_median_pct": 27.0,
+    "centroid_median_hz": 1601
+  },
+  "register": "low position (E2 base)",
+  "density_nps": "10-14 (dense sections)",
+  "notes": "由 chords.py / technique_desc.py 的分析结果手工汇总",
+  "key_from_bass": "E",
+  "bass_weight_s": {
+    "B": 13.6,
+    "G": 13.4,
+    "E": 9.8,
+    "A": 5.7,
+    "A#": 4.3,
+    "F": 3.5,
+    "D#": 3,
+    "F#": 2.7
+  },
+  "chords_from_bass": [
+    "E5",
+    "D5",
+    "G5"
+  ],
+  "bass_note_pct": {
+    "E": 31.2,
+    "B": 11.7,
+    "D": 10,
+    "C": 9.2,
+    "F": 8.6,
+    "A": 7.5,
+    "G": 7.2,
+    "F#": 3.8
+  },
+  "bass_root_windows": {
+    "E": 27,
+    "D": 9,
+    "G": 8,
+    "A": 3,
+    "B": 3,
+    "C": 2,
+    "D#": 1,
+    "G#": 1
+  },
+  "warning": "bass/guitar key disagreement: E vs B",
+  "tuning": "drop_d",
+  "tuning_evidence": "D2 18.5% vs E2 9.3%",
+  "chords_known": {
+    "source": "用户提供的实际弹法（Drop D）",
+    "shapes": {
+      "6/5/4 同品": {
+        "222": "E5",
+        "333": "F5",
+        "555": "G5",
+        "777": "A5",
+        "888": "A#5"
+      },
+      "5/4/3 形": {
+        "244": "B5",
+        "355": "C5",
+        "577": "D5"
+      }
+    },
+    "roots": [
+      "E",
+      "F",
+      "G",
+      "A",
+      "A#",
+      "B",
+      "C",
+      "D"
+    ],
+    "note": "这 8 个根音在贝斯帧直方图里全部出现，验证通过"
+  },
+  "key_hist": {
+    "E": 45.0,
+    "B": 19.3,
+    "C": 11.1,
+    "G": 10.5,
+    "F": 4.7,
+    "A": 3.5
+  }
+}
