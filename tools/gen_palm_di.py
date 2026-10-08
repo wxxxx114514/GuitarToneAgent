@@ -22,10 +22,18 @@ from songlib import song_dir, file_args, P
 
 SR = 48000
 NAMES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"]
+
+def note_of(chord):
+    """从和弦名取根音。支持降号：Bb -> A#（只认 ABCDEFG# 会把 Bb 取成 B，高半音）"""
+    s = chord.strip()
+    if not s or s[0] not in "ABCDEFG": return None
+    if len(s) > 1 and s[1] == "#": return s[0] + "#"
+    if len(s) > 1 and s[1] == "b": return NAMES[(NAMES.index(s[0]) - 1) % 12]
+    return s[0]
 def base_freq(name):
     """音名 -> 该音在低八度的频率（E -> 82.407, B -> 123.471 ...）"""
     i = NAMES.index(name)
-    midi = 40 + i          # E2 = MIDI 40
+    midi = 36 + i          # C2 = MIDI 36（写 40 会让每个根音都高一个大三度）
     return 440.0 * 2**((midi-69)/12.0)
 
 D = song_dir()
@@ -35,10 +43,10 @@ argv = file_args()
 if len(argv) > 0:
     roots = [float(v) for v in argv[0].split(",")]
 elif sp.exists():
-    spec = json.load(open(sp, encoding="utf-8"))
+    spec = json.load(open(sp, encoding="utf-8-sig"))
     names = []
     for c in spec.get("chords", [])[:2]:
-        n = "".join(ch for ch in c if ch in "ABCDEFG#")
+        n = note_of(c)
         if n and n not in names: names.append(n)
     for n in names:
         roots += [base_freq(n), base_freq(n)*2]

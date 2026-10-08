@@ -3,7 +3,7 @@
       单位格式: --units=100:-3,250:+13,630:+1,1600:-2,4000:-11
 """
 import warnings; warnings.filterwarnings("ignore")
-import sys, os
+import sys, os, json
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import numpy as np
 from songlib import song_dir, file_args, P, require, load_mono, envelope, find_start, FC, db
@@ -27,13 +27,14 @@ n = min(len(A), len(B)); A, B = A[:n], B[:n]
 target = np.load(P(D, "target"))[1]
 
 print("=== ① 绝对误差 ===")
-E = {}
+E = {}; RMS = {}
 for tag, x in [("A", A), ("B", B)]:
     st = find_start(x, 48000)
     e = envelope(x[int((st+0.1)*48000):], 48000)
     E[tag] = e; d = e - target
+    RMS[tag] = float(np.sqrt((d**2).mean()))
     print("  %s (%s)  RMS %.2f dB   最大 %.2f dB  削顶 %d"
-          % (tag, fa if tag=="A" else fb, np.sqrt((d**2).mean()), np.abs(d).max(),
+          % (tag, fa if tag=="A" else fb, RMS[tag], np.abs(d).max(),
              int((np.abs(x)>=0.999).sum())))
 dA, dB = E["A"]-target, E["B"]-target
 print("  改善 %.2f dB" % (np.sqrt((dA**2).mean()) - np.sqrt((dB**2).mean())))
@@ -63,3 +64,22 @@ if units:
     err = meas - pred
     r = float(np.sqrt((err**2).mean()))
     print("  模型误差 RMS %.2f dB  -> %s" % (r, "标定可信" if r < 0.8 else "模型有偏差，需重新标定"))
+
+# ④ 归档：测完自动写（归档是测量流程的副产品，不用专门做一步）
+_sp_p = P(D, "spec")
+_sp = json.load(open(_sp_p, encoding="utf-8-sig")) if _sp_p.exists() else {}
+_preset = _sp.get("preset")
+if _preset:
+    try:
+        from preset_archive import record
+        _cat = _sp.get("category") or []
+        if isinstance(_cat, str): _cat = [_cat]
+        record(_preset, _sp.get("song") or D.name, RMS["B"], category=_cat,
+               error_13band=(E["B"] - target))
+        print()
+        print("  已归档: %s @ %s   残差 %.2f dB" % (_preset, _sp.get("song") or D.name, RMS["B"]))
+    except Exception as _e:
+        print("  !! 归档失败: %s" % _e)
+else:
+    print()
+    print("  (spec.json 里没有 preset 字段，跳过归档 —— 定了基准预设就写进去)")

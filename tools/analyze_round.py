@@ -38,7 +38,7 @@ print("  参考: 可行动空间 0.62 dB；优秀 < 0.8；可用 < 1.5")
 # 分和弦
 mk = P(D, "di") / "palm_di_marks.json"
 if mk.exists():
-    marks = json.load(open(mk, encoding="utf-8"))
+    marks = json.load(open(mk, encoding="utf-8-sig"))
     print()
     print("=== 分根音（看误差是否随音高变化）===")
     per = {}

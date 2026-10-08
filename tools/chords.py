@@ -38,7 +38,10 @@ for i in range(int((len(x)/sr)/(bar/2))):
     if v.sum() < 1e-6: continue
     v = v/v.sum()
     best = max((((r,k), float(np.dot(v, t/np.linalg.norm(t)))) for r,k,t in TPL), key=lambda z: z[1])
-    res.append((t0, best[0][0], best[0][1]))
+    # 织体判据：这一帧有几个"显著音级"（占 chroma 总能量 >= 15% 的 bin 个数）
+    #   单音 = 1（基频和谐波都折叠到同一个音级）；强力和弦 = 2；三和弦 = 3+
+    npc = int((v >= 0.15).sum())
+    res.append((t0, best[0][0], best[0][1], npc, best[1]))
 
 from collections import Counter
 print()
@@ -53,8 +56,28 @@ for nm, n in ck.most_common():
     print("  %-5s %4d (%2.0f%%)" % (nm, n, 100*n/len(res)))
 print("  注意: 失真强力和弦的三度常被谐波掩盖，maj/min 判定仅供参考")
 
+print()
+print("=== 织体（先判这个，再决定要不要用和弦表）===")
+_npc = np.array([z[3] for z in res], dtype=float)
+_sc  = np.array([z[4] for z in res], dtype=float)
+print("  每帧显著音级数  平均 %.2f   中位 %.0f" % (_npc.mean(), np.median(_npc)))
+print("  分布  " + "   ".join("%d个音级 %2.0f%%" % (k, 100*(_npc==k).mean()) for k in range(1,6) if (_npc==k).any()))
+print("  参照  单音=1   强力和弦=2   三和弦=3")
+print("  和弦模板最高匹配  平均 %.3f   中位 %.3f" % (_sc.mean(), np.median(_sc)))
+_tm = float(_npc.mean())
+if _tm < 1.8: TEX = "single"
+elif _tm < 2.4: TEX = "power"
+else: TEX = "chord"
+print("  [织体] %s" % {"single":"单音型（旋律 / riff）—— 和弦模板匹配无意义，别用",
+                       "power":"强力和弦型（根音 + 五度）",
+                       "chord":"和弦型（三音以上）"}[TEX])
+print("  !! 这只是【线索】，不是结论：阈值只在干净 DI 上试过（单音 1.06 / 和弦 1.91），")
+print("     且有个单音样本报了 2.46 的反例。真实用途是分轨吉他轨，还受")
+print("     混音高通 + 失真互调 + 贝斯串音 三道干扰（见 Skill 7.6）。")
+print("     拿不准就按【织体未知】处理：让用户照谱子弹主 riff，别硬判。")
+
 seq = []
-for t0, r, k in res:
+for t0, r, k, _n, _s in res:
     lab = r + {"pow":"5","maj":"","min":"m"}[k]
     if seq and seq[-1][0] == lab: seq[-1][2] += 1
     else: seq.append([lab, t0, 1])
@@ -64,10 +87,33 @@ print("  " + "  ".join("%s x%d" % (a,c) for a,b,c in seq[:60]))
 
 # 写回 spec.json
 sp = P(D, "spec")
-spec = json.load(open(sp, encoding="utf-8")) if sp.exists() else {}
-spec["key"] = cc.most_common(1)[0][0]
+spec = json.load(open(sp, encoding="utf-8-sig")) if sp.exists() else {}
+# ★ 用户确认过的值【不许覆盖】（与 check_tuning.py 的先例一致）；推断值必须带来源。
+#   为什么必须带来源：`key_mode` 是用【和弦三度】推的，而本脚本自己就打印
+#   「失真强力和弦的三度常被谐波掩盖，maj/min 判定仅供参考」—— 那条不可靠的三度
+#   曾被 di_instructions 当成定调式的证据（推断套推断），没人能看出它从哪来。
+_usrc = str(spec.get("key_source") or "") == "user"
+if _usrc:
+    print("  [写回] key 用户确认过 —— 我没动")
+else:
+    spec["key"] = cc.most_common(1)[0][0]
+    spec["key_source"] = "inferred_chroma"
+_msrc = str(spec.get("key_mode_source") or "") == "user"
+if _msrc:
+    print("  [写回] key_mode 用户确认过 —— 我没动")
+else:
+    _nmin = ck.get("min", 0); _nmaj = ck.get("maj", 0)
+    spec["key_mode"] = ("min" if _nmin > _nmaj else "maj") if (_nmin + _nmaj) > 0 else "unknown"
+    spec["key_mode_source"] = "inferred_chord_thirds"   # ★ 三度不可靠 -> 下游必须当【假设值】看
 spec["key_hist"] = {k: round(100.0*v/len(res),1) for k,v in cc.most_common(6)}
-spec["chords"] = [a for a,b,c in seq[:20]]
+if str(spec.get("chords_source") or "") == "user":
+    print("  [写回] chords 用户确认过 —— 我没动")
+else:
+    spec["chords"] = [a for a,b,c in seq[:20]]
+    spec["chords_source"] = "inferred_chroma"
+spec["texture"] = TEX
+spec["texture_npc"] = round(_tm, 2)
+spec["texture_score"] = round(float(_sc.mean()), 3)
 json.dump(spec, open(sp,"w",encoding="utf-8"), ensure_ascii=False, indent=2)
 print()
 print("已更新 %s" % sp)
