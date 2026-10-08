@@ -19,7 +19,7 @@
 
 ```
 SKILL.md               ← 入口（86 行，AI 每次整份加载）
-reference/ 13 份        ← 方法论正文（按需读，是核心资产）
+reference/ 14 份        ← 方法论正文（按需读，是核心资产）
 tools/                 ← 真正干活的脚本 + 装环境的脚本
 pyproject.toml uv.lock ← 环境清单（能重建出同样的环境）
 models/MANIFEST.json   ← 模型的来源与 sha256（权重本身不进库）
@@ -85,7 +85,7 @@ tone run load_bsr.py 输入音频 输出目录   :: 包内分离（见 reference
 :: 二、目标曲线 + 调性 / 和弦 / 奏法占比
 tone run target_whole.py
 tone run chords.py
-tone run bass_roots.py
+tone run bass_reference.py
 tone run check_tuning.py
 tone run technique.py
 
@@ -110,14 +110,14 @@ tone run analyze_round.py wet.wav   :: 湿声在 reamp\ 下，写文件名即可
 GuitarToneAgent\
 ├─ tone.bat / tone.ps1     入口（list / new / run / env）
 ├─ SKILL.md                指令文档（86 行，整份加载）
-├─ reference\              13 份参考资料（按需读，不常驻上下文）
+├─ reference\              14 份参考资料（按需读，不常驻上下文）
 ├─ pyproject.toml / uv.lock  依赖清单（环境可由它重建）
 ├─ tools\                  全部脚本
 │   ├─ songlib.py          * 共享库（描述子配方钉死在这里）
 │   ├─ new_song.py         建歌曲工作区
 │   ├─ target_whole.py     目标曲线（用全曲，不用单奏法段）
 │   ├─ chords.py           调性 + 主要和弦
-│   ├─ bass_roots.py       从贝斯轨推根音
+│   ├─ bass_reference.py   从贝斯轨提参考（根音分布，不是结论）
 │   ├─ check_tuning.py     调弦判定（标准 / Drop D / 降半音 / Drop C）
 │   ├─ technique.py        奏法占比（闷音 / 中间 / 开放）
 │   ├─ di_instructions.py  * 给小白看的录音指令（弦号 + 品数）
@@ -134,7 +134,7 @@ GuitarToneAgent\
 │   ├─ reamp2.ps1          reamp 播放（WinMM）
 │   └─ winmm.cs            WinMM P/Invoke 封装
 ├─ models\                分轨模型 + MANIFEST.json（sha256）
-├─ presets\               调出来的预设成品（.mo）
+├─ presets\               设备导出的预设文件 + history\ 历史产物（★ 不是起点来源）
 ├─ docs\                  方法论完整版 + 示例会话记录
 ├─ python\ venv\          包内自带运行时（可直接跑）
 └─ songs\                 每首歌一个目录（数据 + 结论）
@@ -192,7 +192,7 @@ $env:TONE_PY = "D:\some\other\python.exe"
 ## 读文档的正确姿势
 
 `SKILL.md`（86 行）每次都会整份加载，它只放铁律 + 工作流 + 索引。
-细节在 `reference/` 的 13 份里，**按需读，不常驻上下文**：
+细节在 `reference/` 的 14 份里，**按需读，不常驻上下文**：
 
 | 你想干什么 | 读哪份 |
 |---|---|
@@ -258,4 +258,4 @@ $env:TONE_PY = "D:\some\other\python.exe"
 
 ---
 
-*指令见 [SKILL.md](SKILL.md)；13 份参考资料在 [reference/](reference/)。*
+*指令见 [SKILL.md](SKILL.md)；14 份参考资料在 [reference/](reference/)。*

@@ -209,7 +209,7 @@ Agent:  测量 → 分析 → 下一轮
 | **`target_whole.py`** | **全曲目标曲线 → `<歌曲目录>/target.npy`** |
 | **`chords.py`** | **调性 + 和弦（按乐句 chroma + 模板匹配）** |
 | **`check_tuning.py`** | **调弦检测/设置（standard / drop_d / half_down / drop_c）** |
-| **`bass_roots.py`** | **从贝斯轨提取根音（逐帧 f0 + 帧数加权，★ 别用时长短加权）** |
+| **`bass_reference.py`** | **从贝斯轨提取参考（逐帧 f0 + 帧数加权）** |
 | **`technique.py`** | **奏法占比（低频段占比 + 频谱重心）** |
 | **`di_instructions.py`** | **生成给小白看的录音指令（弦号 + 品数 + 调弦，无乐理词汇）** |
 | **`gen_palm_di.py`** | **合成 DI（仅供参考，权重低，不作为定 EQ 的依据）** |
@@ -435,7 +435,7 @@ beartype einops julius ml_collections pydub resampy samplerate scipy six tqdm re
 ```
 <包根>\
     tone.bat  tone.ps1          ← 统一入口
-    SKILL.md  reference\        ← 本 Skill（指令 + 13 份参考资料）
+    SKILL.md  reference\        ← 本 Skill（指令 + 14 份参考资料）
     tools\                      ← 【通用工具】，不含任何歌曲数据
         songlib.py  new_song.py  target_whole.py  chords.py
         technique.py  di_instructions.py  verify_di.py  gen_palm_di.py
@@ -1191,7 +1191,7 @@ FIX4（用合成 F# 调 DI + 闷音窗目标调出来的）：
 │ 第 1 步  准备内容匹配的 DI                                     │
 │   主：用户按 di_instructions.py 的指令录（定 EQ 的唯一依据）     │
 │   辅：合成 DI（gen_palm_di.py）—— 仅供参考，权重低               │
-│   verify_di.py 自动检查：电平/调性/调弦/奏法                    │
+│   verify_di.py 自动检查：电平/调性/奏法（调弦只查确没确认）      │
 │   ⚠️ 调性、奏法、和声必须对齐，否则后面测的都是假数字            │
 └─────────────────────────────────────────────────────────────┘
                             ↓
@@ -1247,20 +1247,21 @@ tone.bat run technique.py     # ★ 产出奏法占比，决定让用户录什�
 
 #### 让用户按规格录（唯一路径）
 
-**先确认调弦——这一步必须问用户，不能只靠自动检测**
+**调弦属于【输入】，不属于分析 —— 直接问用户**
 
 ```powershell
-tone.bat run check_tuning.py          # 自动判（仅供参考）
-tone.bat run check_tuning.py drop_d   # 用户确认后手动设
+tone.bat run check_tuning.py --set=drop_d   # 用户说了就记下来（唯一会写盘的用法）
+tone.bat run check_tuning.py                # 诊断：只有用户不确定、或怀疑 spec 记错时才跑
 ```
 
 **为什么必须问**：吉他和弦表在 Drop D / 标准 / 降半音下完全不同。
 **实测**：按标准调弦算出的品数**全是错的**——用户弹的是 Drop D，
 E5 是"6/5/4 弦全按第 2 品"（一根手指横按），不是"6 弦空弦 + 5 弦 2 品"。
 
-**自动判据只有参考价值**：Drop D 的 6 弦是 D2（73.4 Hz），标准是 E2（82.4 Hz），
-比 D2/E2 的出现率。**但吉他轨低音区有贝斯泄漏**（实测 61.7 Hz 的 B1 占 27%，
-吉他根本弹不到那个音），所以自动判定会被污染。
+**不要再比「D2/E2 出现率」** —— 那个判据量的是频谱裙边，已证伪（见 `07-已证伪路线.md`）。
+诊断现在的做法：先验证音高本身是真的（复音会被 f0 估计器报低一~两个八度），
+再做「哪几套调弦能解释【全部】低音」，并且**低音带预检**不过就直接交回给人。
+**它只证伪、不给建议** —— 并列时选哪一套必须由用户在琴上确认。
 
 **支持的调弦**（`di_instructions.py` 里）：`standard` / `drop_d` / `half_down` / `drop_c`
 
@@ -1338,8 +1339,8 @@ tone.bat run meas_prep.py      # 通过后再归一化
 | **电平** | 不能是静音，不能爆音 | 提醒调声卡输入增益 |
 | **时长** | ≥ 15 秒 | 提醒录完三段 |
 | **调性** | 主音跟 spec 一致 | 报出实际主音 |
-| **调弦** | 反推用户实际用的调弦 | 直接建议改成哪个，并重新出指法 |
-| **奏法** | ★ **自参照**：闷音段的低频占比要比开放段高 ≥ 8 个百分点 | 提醒手掌要真正压住 |
+| **调弦** | 只查「有没有经用户确认」—— **不做推断** | 让用户念一下琴上的调弦，再用 `check_tuning.py --set=` 记下来 |
+| **奏法** | ★ **自参照**：比两段的**衰减**（不是低频占比 —— 那个已证伪，见 `07` §8.5） | 先怀疑判据，最后才怀疑演奏 |
 
 **奏法为什么能自参照**：不跟任何绝对基准比，只比"用户自己的闷音段 vs 用户自己的开放段"。
 **这样就不需要知道'真实闷音应该长什么样'**，只需要用户前后弹得不一样。
@@ -1646,10 +1647,7 @@ JSON 可解析
 ### 10.3 已测过的预设（`10C J900R` 系）
 
 ```
-AMP:   Type 7  | Bass 40, Mid 64, Treble 64, Gain 22, Pres 50, Mst 55
-CAB:   Type 5  | Mic 2, Distance 20, Center 10, Tube 1, Sync 0
-DS/OD: Type 3 (FLEX BOOST) | Gain 0, Tone 50, Volume 100   ← 纯推子
-EQ:    Switch 0
+（此处原有四行可照抄的参数值清单，已【全部】删除 —— 起点由 synth_start.py 从规格组，不抄现成预设）
 ```
 
 **出厂预设 vs 目标的距离（J-rock 节奏）：**

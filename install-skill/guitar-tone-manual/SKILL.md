@@ -32,15 +32,43 @@ guitar-tone-manual    只能手动拧 → 出表格  → 用户迭代
 - 没有 MIDI 换预设、没有 PC 端编辑器能导出/导入参数
 - **参数只能靠人在设备上拧**
 
+## 第零步：第一次用这台设备 —— 先要齐三样，不齐不开工
+
+**每台新设备只做一次。** 齐了之后存成设备档案，以后直接读档案。
+
+| 要什么 | 从哪来 | 用来干什么 |
+|---|---|---|
+| **① 说明书的【模块表】** | 说明书截图 / 界面截图 | 知道这台设备有哪些模块、能串成什么效果链 |
+| **② 说明书的【参数表】** | 同上 | 每个参数的**范围、步进、单位** —— 没有它就不知道拧到几算到顶 |
+| **③ 一个【导出的预设文件】（或设备上的默认值）** | 设备能导出就导出一份；不能导出就用说明书的默认值 | 起点预设由 `synth_start.py` **从规格组**（参数表 + §10.7.3 经典配置），**不靠抄现成预设**；这一样只用来拿「外壳结构 + 关闭模块的 Data」 |
+
+> **⚠️ 前两样不齐就别往下走。**
+> 缺参数表 → 解出来的值拧不到（不知道 range 就不知道是否到顶）；
+> 缺模块表 → 不知道该开什么、Type 编号也无从核对。
+>
+> **③ 不再要求「所有预设的截图」**：起点不从现成预设里挑 —— 抄一份别人的调音 = 把厂商的审美当起点，
+> 而且设备一换就全废。能导出预设文件最好（拿它的结构）；只能手抄就用说明书的默认值。
+
+**要资料的话术（一次说完，别挤牙膏）：**
+
+> 你这台不是 GE250，我没法读它的参数文件。开工前要两样：
+> ① 说明书里「模块 / 参数」那几页（或设备上的参数界面）
+> ② 设备型号 + 固件版本
+> 能导出一份预设文件就更好（我拿它的结构当外壳，起点不抄它的值）。
+> 我整理成表，你确认有没有错。
+
+**第二次用同一台设备**：直接读设备档案（`parameter_table.json` + `preset.json`），不用再传。
+**只有换设备、换了说明书、或者加装了模块，才重新要。**
+
 ## 第一步：拿到设备的「三张表」
 
 **让用户传说明书截图，或设备界面的截图。** 从里面提取：
 
 ```
 ① 模块表   有哪些模块（DS/OD / AMP / CAB / EQ / DELAY / REVERB / …）
-② 参数表   每个模块有哪些参数、范围、步进、单位
-③ 预设表   有哪些出厂预设、名字、分类
-④ 效果链   信号从输入到输出依次过哪些模块
+② 参数表   每个模块有哪些参数、范围、步进、单位（★ 按 Type 分：换个 Type 键名可能完全不同）
+③ 效果链   信号从输入到输出依次过哪些模块
+④ 一个导出的预设文件（可选）—— 只用来拿结构，不用它的值
 ```
 
 > **⚠️ 截图里看不出来的，一律留空并写进 `unknowns`，不要猜。**
@@ -59,46 +87,70 @@ preset.json            当前状态   模块·参数·值         ← 用户改�
 
 ### `parameter_table.json`（规格，从截图提取）
 
+**格式的权威定义在 `reference/13-两表规范.md`，模板 `reference/parameter_table.template.json`。**
+拷模板填，填完必须过校验 —— 不通过不许往下走：
+
+```powershell
+tone.bat run check_parameter_table.py devices\<型号>\parameter_table.json --table
+```
+
+**形状（对照说明书那两页看）：**
+
 ```json
 {
-  "device": "<品牌 型号>",
-  "source": "manual p.12 截图",
-  "confidence": "high | medium | low",
-  "updated": "<日期>",
+  "schema": "parameter_table/v2",
+  "device": { "brand": "<品牌>", "model": "<型号>" },
+  "source": "manual p.12 截图",   "confidence": "high",   "updated": "<日期>",
 
-  "chain": ["DS/OD", "AMP", "CAB", "EQ", "DELAY", "REVERB"],
+  "chain": { "modules": ["DS/OD", "AMP", "CAB", "EQ", "DELAY", "REVERB"], "fixed": true },
 
   "modules": {
     "AMP": {
-      "types": ["JCM900", "Plexi", "5150"],
+      "file_key": "AMP", "switch_key": "Switch", "type_key": "Type", "data_key": "Data",
+      "types": [
+        { "id": 0, "manual_item": 1, "name": "CLEAN",  "params": {} },
+        { "id": 1, "manual_item": 2, "name": "JCM900", "params": {} }
+      ],
       "params": {
-        "Gain": { "range": [0, 100], "step": 1, "unit": "", "note": "" },
-        "Mst":  { "range": [0, 100], "step": 1, "unit": "", "note": "线性幅度，不是 dB" }
+        "Gain": { "range": [0, 100], "step": 1, "default": 50 },
+        "Mst":  { "range": [0, 100], "step": 1, "default": 55, "note": "线性幅度，不是 dB" }
       }
     },
     "EQ": {
-      "types": null,
-      "params": {
-        "100Hz": { "range": [0, 100], "step": 1, "unit": "unit", "note": "dB/单位未标定" }
-      }
+      "file_key": "EQ", "switch_key": "Switch", "type_key": "Type", "data_key": "Data",
+      "types": [
+        { "id": 0, "manual_item": 1, "name": "5-BAND", "params_from_module": false,
+          "params": { "100Hz": { "range": [0, 100], "step": 1, "default": 50 } } }
+      ],
+      "params": {}
     }
   },
 
+  "preset_format": { "kind": "manual", "chain_key": null, "chain_value": null, "template": {} },
   "unknowns": ["EQ 的 dB/单位 未标定", "效果链顺序是推断的"]
 }
 ```
+
+**比「模块名 + 参数名」多出来的四样，缺了生成器就用不了：**
+
+| 多什么 | 为什么 |
+|---|---|
+| **Type 的 `id`**（从 0 开始）+ `manual_item` | 预设文件/设备认的是编号，不是名字；`manual_item` 留着回说明书核对 |
+| **参数可以挂在 Type 上**（`params_from_module: false`） | 同一模块换个 Type，键名可能完全不同（EQ 最明显） |
+| **`default`** | 「每个值都有依据」里最基础的一档：说明书默认值。没写就省略，别填 0 |
+| **`preset_format`** | 决定产物是预设文件还是「拧到几」的表格；没有文件接口就写 `kind: "manual"` |
+
 
 ### `preset.json`（状态，用户设备上的值）
 
 ```json
 {
   "device": "<品牌 型号>",
-  "preset": "10C J900R",
+  "preset": "<预设名>（≤8 字符那种）",
   "captured": "<日期>",
   "values": {
-    "AMP":   { "type": "JCM900", "Gain": 22, "Bass": 40, "Mid": 64, "Mst": 55 },
-    "DS/OD": { "type": "TS808", "Gain": 0, "Tone": 50, "Volume": 100 },
-    "EQ":    { "100Hz": 42, "250Hz": 67, "630Hz": 38 }
+    "AMP":   { "type": "<屏幕上读到的型号名>", "Gain": 0, "Bass": 0 },
+    "DS/OD": { "type": "<同上>", "Gain": 0, "Level": 0 }
   }
 }
 ```
@@ -172,13 +224,7 @@ EQ        100Hz       0-100       42      dB/单位【未标定】
 
 ## 怎么跟用户说
 
-**要资料时：**
-
-> 你这台不是 GE250，我没法直接改它的参数文件。
-> 麻烦给我两类截图：
-> ① 说明书里「模块 / 参数」那几页，或者设备界面上的参数界面
-> ② 出厂预设列表
-> 我整理成表，你确认有没有错。
+**要资料时：**见第零步那句，一次说完。
 
 **交表时（把能做/不能做说清楚）：**
 

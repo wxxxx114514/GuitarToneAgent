@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "presets": {
+    "10C J900RG": {
+      "category": [
+        "metal",
+        "hard-rock"
+      ],
+      "params": {},
+      "sessions": [
+        {
+          "song": "BlackShout",
+          "residual": 1.77,
+          "date": "2026-09-30"
+        }
+      ]
+    }
+  }
+}

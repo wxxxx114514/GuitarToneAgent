@@ -83,14 +83,28 @@ switch ($Cmd.ToLower()) {
     & $PY (Join-Path $Src 'new_song.py') $A1 $A2
   }
   'run' {
-    if (-not $env:SONG_DIR) { Write-Host '没设 SONG_DIR' -ForegroundColor Red; break }
-    if (-not $A1) { Write-Host '用法: tone run 脚本名 [参数...]'; break }
-    if (-not $PY) { Write-Host '找不到 Python。见 README 环境准备' -ForegroundColor Red; break }
+    # ★【不需要歌的脚本】：门（check_all）与各套件（test_*.py）、库自检（fingering.py）没有 SONG_DIR 时
+    #   也必须真跑。原来这里一律 break -> 打印「没设 SONG_DIR」然后 **exit 0**，
+    #   而 skill 里写的正是 tone run tools/check_all.py 这条命令 —— 门可以在什么都没跑的情况下给绿灯。
+    # ★ 容忍两种写法：skill/README 里写的是 tools/check_all.py，而这里提示的是不带前缀的 ——
+    #   两边必须有一个说了算，所以这里直接剥掉开头的 tools/（否则照 skill 敲的人拿到「脚本不存在」）。
+    $A1 = $A1 -replace '^[Tt]ools[\\/]', ''
     $script = Join-Path $Src $A1
-    if (-not (Test-Path -LiteralPath $script)) { Write-Host "脚本不存在: $script" -ForegroundColor Red; break }
+    if (-not (Test-Path -LiteralPath $script)) { Write-Host "脚本不存在: $script（提示：脚本名不带 tools/ 前缀）" -ForegroundColor Red; exit 2 }
+    $noSong = ((Split-Path -Leaf $A1) -match '^(check_all|test_.*|fingering)[.]py$')
+    # ★ 存在性检查放在 SONG_DIR 之前：名字写错时该说「脚本不存在」，不该说「没设 SONG_DIR」
+    if (-not $env:SONG_DIR -and -not $noSong) {
+      Write-Host '没设 SONG_DIR（先设 SONG_DIR，或用 tone songs 看列表）' -ForegroundColor Red
+      exit 2
+    }
+    if (-not $A1) { Write-Host '用法: tone run 脚本名 [参数...]'; exit 2 }
+    if (-not $PY) { Write-Host '找不到 Python。见 README 环境准备' -ForegroundColor Red; exit 2 }
+    # ★ 脚本名写错也必须 exit 2：break 只会结束 switch，脚本退出码是 0 —— 那会让"没跑"看起来像"跑过了"
     $env:PYTHONIOENCODING = 'utf-8'
-    Write-Host ("[SONG_DIR] " + $env:SONG_DIR) -ForegroundColor DarkGray
-    $all = @($script, $env:SONG_DIR)
+    if ($env:SONG_DIR) { Write-Host ("[SONG_DIR] " + $env:SONG_DIR) -ForegroundColor DarkGray }
+    else { Write-Host '[无 SONG_DIR] 这个脚本不需要歌' -ForegroundColor DarkGray }
+    $all = @($script)
+    if ($env:SONG_DIR -and -not $noSong) { $all += $env:SONG_DIR }
     if ($A2) { $all += $A2 }
     if ($Rest.Count -gt 0) { $all += $Rest }
     & $PY @all
@@ -112,3 +126,4 @@ switch ($Cmd.ToLower()) {
   }
   default { Write-Host "未知命令: $Cmd（可用: list / new / run / env）" }
 }
+
