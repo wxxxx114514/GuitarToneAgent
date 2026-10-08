@@ -1,56 +1,40 @@
-# ── Python 运行时产物（跑脚本会自动生成） ──
+# ---- uv / venv ----
+.venv/
+venv/
 __pycache__/
 *.pyc
 *.pyo
-.pytest_cache/
 
-# ── 环境：不进 git，用 uv 一步重建 ──
-#   uv sync            （按 pyproject.toml + uv.lock 建 venv）
-venv/
-.venv/
-python/
-ffmpeg/
-_env/
+# ---- uv 缓存 ----
+.uv-cache/
 uv_cache/
-uv_python/
-.pkgs.txt
+.cache/
 
-# ── 模型权重：不进 git（ckpt 699 MB，GitHub 单文件上限 100 MB） ──
-#   用 python tools/dl_models.py 下载，models/MANIFEST.json 里有 sha256
-#   models/*.yaml 和 MANIFEST.json 要保留（配置很小，是复现所必需）
+# ---- 运行时产物（跑 make_send.py / do_reamp.ps1 会生成）----
+*.wav
+*.flac
+*.mp3
+*.mo.part
+
+# ---- 临时 ----
+*.tmp
+~$*
+
+# ★ 保留（故意不忽略）：
+#   reference/*.md      18 份文档
+#   tools/  8 个工具（4 驱动 + 4 分轨）
+#   models/MANIFEST.json *.yaml   模型来源与配置（权重不进）
+#   pyproject.toml uv.lock  环境定义
 models/*.ckpt
 models/*.pth
 models/*.onnx
 models/*.part
 
-# ── 每首歌的音频产物（体积大、可重算） ──
-songs/*/stems/
-songs/*/stems_htdemucs/
-songs/*/di/*.wav
-songs/*/reamp/*.wav
-songs/*/reamp/*.part
-*.wav
-*.flac
-*.mp3
+# ---- 本地环境 / 工具（不进仓库 —— 各人自己的，不是 skill 的一部分）----
+python/
+ffmpeg/
+_env/
+_tmp*/
 
-# ── 生成物 / 临时 ──
-*.mo.part
-.models_cache/
-.cache/
-*.tmp
-~$*
-
-# 本地敏感/个性化配置（可能含 token、机器专属路径）
-.env
-.env.*
-*.local.json
-
-
-# ── 保留说明：以下【故意不忽略】──
-#   models/MANIFEST.json  模型来源与 sha256（复现所需）
-#   models/*.yaml         模型配置（4.9 KB）
-#   songs/*/target.npy    目标曲线（几百字节，是判据基准）
-#   songs/*/spec.json     演奏规格（结论）
-#   songs/*/notes.md      每首歌的进展记录（知识）
-#   presets/*.mo          调出来的预设成品（7 KB/个）
-#   docs/*.md             方法论与示例会话记录
+# ★ 注意：这些是【跑起来才需要】的本地目录；
+#   uv sync 会重建 .venv；分轨模型靠 dl_bsr.py 下

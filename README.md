@@ -93,12 +93,11 @@ tools/
 
 ## 怎么用（clone 之后）
 
-**不用改一堆地址** —— 本 skill 的 3 个工具 + 工具包内 33 个脚本都是**自定位**的。
+**不用改一堆地址** —— 本 skill 的 **8 个工具都是自定位的**。
 文档里的占位符是给你照着打命令时替换的，**脚本本身一行都不用改**：
 
 ```
-<包根>    = GuitarToneAgent 的检出目录（工具 / venv / ffmpeg / models / presets）
-<本项目>  = 本 skill 的目录（SKILL.md 所在）
+<本项目>  = 本仓库根（SKILL.md 所在）—— tools\ models\ reference\ pyproject.toml 都在它下面
 <gt-test> = 实测归档（账本 / 矩阵 / 录音 / 素材）
 <工作区>  = 上面几个的共同父目录（_redo/ · 温度差/ 在它下面）
 ```
@@ -112,12 +111,12 @@ uv sync          # 读 pyproject.toml + uv.lock -> 建 .venv（27 个包 · 约 
 装完直接用这个环境跑：
 
 ```powershell
-.venv\Scripts\python.exe tools\make_send.py <源wav> <出wav> <起始秒> <时长> <峰值dBFS>
+.venv\Scripts\python.exe tools\make_send.py <源wav> <出wav>     # 默认自动裁空白 · -32 dBFS
 powershell -File tools\do_reamp.ps1 -Send <发送wav> -RecSecs 14.1 -Out <录音wav>
 ```
 
 ★ **`guitar-tone-skill` 的环境只有 3 个依赖**（numpy / soundfile / librosa）—— 够跑这 3 个驱动。
-★ 要跑**分轨模型**（torch / audio-separator 那一坨）-> 用 `<包根>` 的 `pyproject.toml` + `uv.lock`。
+★ 分轨模型要的 torch / audio-separator **已经在这个 pyproject 里** —— 一次 `uv sync` 全都有。
 ★ `.venv` 不进仓库（`.gitignore` 已挡）—— **传的是 lock，环境各人自己 `uv sync` 重建**。
 
 ---
@@ -125,23 +124,19 @@ powershell -File tools\do_reamp.ps1 -Send <发送wav> -RecSecs 14.1 -Out <录音
 唯一要指的是 **Python 解释器**（四选一）：
 
 ```powershell
-# 1 用工具包自带入口（最省事 · 零配置）
-<包根>\tone.bat env              # 检查环境（Python / 依赖 / 模型 / ffmpeg）
-<包根>\tone.bat run <包内脚本>
-# 2 加进 PATH（一次）
-setx PATH "%PATH%;<包根>\venv\Scripts"
+# 1 加进 PATH（一次）
+setx PATH "%PATH%;<本项目>\.venv\Scripts"
 # 3 设环境变量（一次）
-setx TONE_PY "<包根>\venv\Scripts\python.exe"
+setx TONE_PY "<本项目>\.venv\Scripts\python.exe"
 # 4 每次写全路径
-<包根>\venv\Scripts\python.exe <包内脚本>
+<本项目>\.venv\Scripts\python.exe <脚本>
 ```
 
 ## 依赖
 
 | 依赖 | 要不要 | 说明 |
 |---|---|---|
-| **GuitarToneAgent**（工具包） | 要 | 39 个脚本 + winmm.cs；本仓库只带其中 3 个驱动 |
-| **Python 环境** | 要 | numpy / scipy / librosa / soundfile（`<包根>\venv`）|
+| **Python 环境** | 要 | numpy / scipy / librosa / soundfile（`<本项目>\venv`）|
 | **音频设备** | 要 | 48 kHz · 双工（播放 + 录音）· 本轮 MOOER GE250 |
 | **分轨模型**（667 MB） | 不要（按需） | **权重不入库**；`dl_bsr.py` 一行下齐 + sha256 校验 |
 
@@ -149,8 +144,8 @@ setx TONE_PY "<包根>\venv\Scripts\python.exe"
 
 ```
 ① 现成的    -> 直接用（本轮就是这条，模型一次没跑）
-② 模型分轨  -> python <包根>\tools\dl_bsr.py          # 下模型（667 MB）
-              python <包根>\tools\load_bsr.py <歌> <出>  # 跑分轨
+② 模型分轨  -> python <本项目>\tools\dl_bsr.py          # 下模型（667 MB）
+              python <本项目>\tools\load_bsr.py <歌> <出>  # 跑分轨
               ★ 只有这个模型能用（BS-Roformer SW 6-stem）；别的（UVR / demucs）质量不够
 ```
 
@@ -185,17 +180,4 @@ setx TONE_PY "<包根>\venv\Scripts\python.exe"
 ## 与工具包的关系
 
 本仓库**只带 3 个驱动**（送+录 / 造信号 / 双工核心），其余**复用工具包的脚本、不改**。
-为什么不全搬：工具包内脚本靠 `__file__` 定位包根（models / presets / songs / _env），复制出去会断；
-而这 3 个驱动没有包根依赖，能独立跑。详见 `reference/11-工具清单.md`。
-
----
-
-## 装到 AI 助手（DSH）
-
-这仓库本身就是 **Agent Skill 包** —— 入口是 `SKILL.md`，不是 `pip install`。
-装到 `.dsh\skills\` 用目录 bundle 形式（能带 reference\ 资源）：
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File install-skill\安装说明.md   # 见里面的命令
-powershell -NoProfile -ExecutionPolicy Bypass -File tools\sync-skill-src.ps1  # 改完 SKILL.md/reference 后同步分发副本
-```
+8 个工具全部**不依赖任何外部目录** —— 可以单独拷走用。详见 `reference/11-工具清单.md`。

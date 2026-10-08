@@ -218,7 +218,7 @@ wheels = [
 ]
 
 [[package]]
-name = "guitar-tone-agent"
+name = "guitar-tone-skill"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

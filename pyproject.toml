@@ -1,7 +1,7 @@
 [project]
-name = "guitar-tone-agent"
+name = "guitar-tone-skill"
 version = "0.1.0"
-description = "电吉他效果器调音 Agent —— 闭环测音色（参考曲 -> 目标曲线 -> 改预设 -> reamp 测量 -> 解 EQ）"
+description = "guitar-tone-skill —— 调音色完整包：流程 / 方法论 / 算法 + 送录驱动 + 分轨"
 requires-python = ">=3.13,<3.14"
 # 版本按现有 venv 实测冻结；要改版本，先跑一遍全流程再改
 dependencies = [
